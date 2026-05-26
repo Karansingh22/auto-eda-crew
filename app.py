@@ -2,6 +2,8 @@
 
 from pathlib import Path
 import sys
+import importlib.util
+import json
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
@@ -35,13 +37,61 @@ def load_uploaded_dataset(file_name: str, file_bytes: bytes):
 
 st.set_page_config(page_title="CrewAI Dataset Analyst", page_icon=":bar_chart:", layout="wide")
 
-st.title("CrewAI Dataset Analyst")
-st.caption("Agent-led chat for greetings and questions. Full supervised EDA + ML analysis for uploaded datasets.")
+# Inject premium custom CSS styling
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&display=swap');
+html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    font-family: 'Outfit', sans-serif !important;
+}
+.hero-container {
+    background: linear-gradient(135deg, rgba(16, 20, 30, 0.9) 0%, rgba(24, 30, 45, 0.9) 100%);
+    padding: 2.5rem;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 198, 255, 0.25);
+    box-shadow: 0 8px 32px 0 rgba(0, 198, 255, 0.08);
+    margin-bottom: 2rem;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.hero-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #00C6FF 0%, #0072FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: #a0aec0;
+    font-weight: 300;
+    line-height: 1.6;
+}
+.glow-badge {
+    background: rgba(0, 198, 255, 0.15);
+    color: #00C6FF;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(0, 198, 255, 0.3);
+    display: inline-block;
+    margin-bottom: 1rem;
+}
+</style>
+""", unsafe_html=True)
 
-st.info(
-    "Upload a CSV or Excel dataset up to 30 MB, choose the target variable, then ask for "
-    "EDA, ML recommendations, data quality checks, or a real-world problem-solving plan."
-)
+# Render premium header
+st.markdown("""
+<div class="hero-container">
+    <span class="glow-badge">⚡ Powered by CrewAI & Groq</span>
+    <h1 class="hero-title">OmniAnalyst</h1>
+    <p class="hero-subtitle">
+        An advanced multi-agent system that delivers deep Exploratory Data Analysis, automated machine learning pipeline strategies, interactive Plotly dashboards, and production-ready downloadable training scripts with a single prompt.
+    </p>
+</div>
+""", unsafe_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -186,14 +236,88 @@ if prompt := st.chat_input("Say hi, ask a question, or request dataset EDA/ML an
 
 if st.session_state.show_reports:
     eda_report, ml_report = report_paths(OUTPUT_DIR)
-    col1, col2 = st.columns(2)
+    
+    st.divider()
+    st.subheader("💡 Intelligent Insights & Assets")
+    
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "📊 EDA & Analysis",
+        "🤖 ML Strategy & Modeling",
+        "🎨 Interactive AI Dashboard",
+        "🚀 Production Pipeline Script"
+    ])
+    
+    with tab1:
+        if eda_report.exists():
+            st.markdown(eda_report.read_text(encoding="utf-8"))
+        else:
+            st.info("EDA Report is being compiled or was not generated.")
+            
+    with tab2:
+        if ml_report.exists():
+            st.markdown(ml_report.read_text(encoding="utf-8"))
+        else:
+            st.info("ML Report is being compiled or was not generated.")
+            
+    with tab3:
+        vis_script = OUTPUT_DIR / "vis_code.py"
+        if vis_script.exists() and uploaded_file is not None:
+            try:
+                # Dynamically load the generated visualization script
+                spec = importlib.util.spec_from_file_location("vis_code", str(vis_script))
+                vis_module = importlib.util.module_from_spec(spec)
+                sys.modules["vis_code"] = vis_module
+                spec.loader.exec_module(vis_module)
+                
+                if hasattr(vis_module, "generate_plots"):
+                    with st.spinner("Generating custom interactive visualizations from dataset..."):
+                        plotly_dicts = vis_module.generate_plots(df)
+                        
+                        import plotly.graph_objects as go
+                        
+                        if plotly_dicts:
+                            st.markdown("### 🎨 AI-Generated Interactive Dashboard")
+                            st.caption("These interactive Plotly charts were custom-built by the agent specifically for your dataset and target variable.")
+                            for i, chart in enumerate(plotly_dicts):
+                                try:
+                                    if isinstance(chart, dict):
+                                        fig = go.Figure(chart)
+                                    else:
+                                        fig = chart
+                                    
+                                    fig.update_layout(
+                                        template="plotly_dark",
+                                        paper_bgcolor="rgba(0,0,0,0)",
+                                        plot_bgcolor="rgba(0,0,0,0)",
+                                        margin=dict(l=20, r=20, t=40, b=20),
+                                    )
+                                    st.plotly_chart(fig, use_container_width=True)
+                                    st.divider()
+                                except Exception as chart_err:
+                                    st.error(f"Error rendering chart {i+1}: {chart_err}")
+                        else:
+                            st.info("No interactive charts were generated by the visualization specialist.")
+                else:
+                    st.error("The generated visualization script does not define the expected `generate_plots(df)` function.")
+            except Exception as vis_err:
+                st.error(f"Failed to execute generated visualization code: {vis_err}")
+        else:
+            st.info("Upload a dataset and run analysis to generate the interactive AI dashboard.")
+            
+    with tab4:
+        pipeline_file = OUTPUT_DIR / "pipeline.py"
+        if pipeline_file.exists():
+            pipeline_code = pipeline_file.read_text(encoding="utf-8")
+            st.markdown("### 🚀 Download Ready-to-Run AutoML Pipeline")
+            st.info("This production-ready Python script was custom-generated by the ML Specialist to preprocess, train, cross-validate, and export a calibrated model for your target variable.")
+            st.code(pipeline_code, language="python")
+            st.download_button(
+                label="📥 Download pipeline.py",
+                data=pipeline_code,
+                file_name="pipeline.py",
+                mime="text/x-python"
+            )
+        else:
+            st.info("Upload a dataset and run analysis to generate the production pipeline script.")
 
-    if eda_report.exists():
-        with col1:
-            with st.expander("EDA Report", expanded=False):
-                st.markdown(eda_report.read_text(encoding="utf-8"))
 
-    if ml_report.exists():
-        with col2:
-            with st.expander("ML Report", expanded=False):
-                st.markdown(ml_report.read_text(encoding="utf-8"))

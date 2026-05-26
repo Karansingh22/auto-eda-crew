@@ -50,3 +50,36 @@ ml_task = Task(
     expected_output="A concise structured ML report with practical model recommendations.",
     output_file="output/ml_report.md",
 )
+
+vis_task = Task(
+    description=(
+        "Generate a standalone, completely valid python script to create beautiful, interactive Plotly charts based on the dataset profile: '{topic}'. "
+        "The script MUST define a function `generate_plots(df)` that takes a pandas DataFrame `df` and returns a list of dictionaries. "
+        "Inside `generate_plots`, detect the column types and target variable, create 3-4 highly tailored interactive Plotly figures "
+        "(e.g., target distribution, correlation matrix heatmap, scatter plots for numeric features against target, or box/bar plots for categorical features), "
+        "convert each figure to a JSON-compatible dictionary using `fig.to_plotly_json()` (or `plotly.io.to_json(fig)` but to_plotly_json() is preferred), "
+        "and save the list of these dictionaries to a JSON file located at `output/plotly_charts.json`. "
+        "The generated script should be completely self-contained, import pandas, plotly.express, plotly.graph_objects, and json, "
+        "handle missing values or large categories gracefully (e.g. limiting categorical plots to top 10 categories), "
+        "and contain robust try/except blocks inside `generate_plots`. "
+        "The generated Python script must be saved directly to `output/vis_code.py`. "
+        "Make sure to output ONLY valid Python code in the file, with NO markdown formatting, NO backticks (```python), and NO extra explanations."
+    ),
+    expected_output="A valid, self-contained Python script saved to output/vis_code.py that generates Plotly charts JSON.",
+    output_file="output/vis_code.py",
+)
+
+pipeline_task = Task(
+    description=(
+        "Based on the dataset profile and ML task analysis for '{topic}', generate a complete, production-ready AutoML training script in Python. "
+        "The script must perform target-aware data cleaning, robust preprocessing (scaling, imputation, one-hot encoding for tabular columns), "
+        "stratified K-fold cross-validation (or time-aware K-fold if a temporal pattern is found), model training (Logistic/Linear Regression, "
+        "Random Forest, or XGBoost depending on class/regression type), evaluate performance metrics, plot or save evaluation metrics, "
+        "and save the final trained pipeline using `joblib`. "
+        "The generated Python script must be saved directly to `output/pipeline.py`. "
+        "Output ONLY valid Python code in the file, with NO markdown formatting, NO backticks (```python), and NO extra explanations."
+    ),
+    expected_output="A complete, executable Python training script saved to output/pipeline.py.",
+    output_file="output/pipeline.py",
+)
+

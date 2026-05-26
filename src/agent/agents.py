@@ -3,14 +3,31 @@
 from crewai import Agent, Crew, Process
 from crewai_tools import TavilySearchTool
 from config.settings import llm
-from tools.tasks import orchestrate_task, eda_task, ml_task
+from tools.tasks import (
+    route_task,
+    orchestrate_task,
+    eda_task,
+    ml_task,
+    vis_task,
+    pipeline_task,
+)
 from prompts.orchestrator_system import SYSTEM_PROMPT as ORCHESTRATOR_PROMPT
 from prompts.eda_system import SYSTEM_PROMPT as EDA_PROMPT
 from prompts.ml_system import SYSTEM_PROMPT as ML_PROMPT
 
-# ── Agents ──────────────────────────────────────────────
+# ── Tools ───────────────────────────────────────────────
 
 search_tool = TavilySearchTool()
+
+# ── Agents ──────────────────────────────────────────────
+
+router = Agent(
+    role="Router",
+    goal="Determine the user's intent with extreme accuracy. Decide if they want a general greeting/chat or a detailed dataset analysis.",
+    backstory="Highly analytical query classifier. Decides instantly and correctly.",
+    llm=llm,
+    allow_delegation=False,
+)
 
 orchestrator = Agent(
     role="Orchestrator",
@@ -41,9 +58,32 @@ ml_agent = Agent(
     system_template=ML_PROMPT + "\n\n{{ .System }}",
 )
 
-crew = Crew(
-    agents=[orchestrator, eda_agent, ml_agent],
-    tasks=[orchestrate_task, eda_task, ml_task],
+vis_agent = Agent(
+    role="Visualization Specialist",
+    goal="Create beautiful, modern, and highly insightful interactive Plotly charts in Python.",
+    backstory="Expert data visualizer who understands which charts best reveal patterns in numerical, categorical, and target variables.",
+    llm=llm,
+)
+
+# ── Crews ───────────────────────────────────────────────
+
+route_crew = Crew(
+    agents=[router],
+    tasks=[route_task],
+    process=Process.sequential,
+    verbose=True,
+)
+
+chat_crew = Crew(
+    agents=[orchestrator],
+    tasks=[orchestrate_task],
+    process=Process.sequential,
+    verbose=True,
+)
+
+analysis_crew = Crew(
+    agents=[eda_agent, ml_agent, vis_agent],
+    tasks=[eda_task, ml_task, vis_task, pipeline_task],
     process=Process.sequential,
     verbose=True,
 )
