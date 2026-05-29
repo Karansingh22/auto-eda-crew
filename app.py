@@ -80,18 +80,18 @@ html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
     margin-bottom: 1rem;
 }
 </style>
-""", unsafe_html=True)
+""", unsafe_allow_html=True)
 
 # Render premium header
 st.markdown("""
 <div class="hero-container">
-    <span class="glow-badge">⚡ Powered by CrewAI & Groq</span>
+    <span class="glow-badge">⚡ Powered by CrewAI & Google GenAI</span>
     <h1 class="hero-title">OmniAnalyst</h1>
     <p class="hero-subtitle">
         An advanced multi-agent system that delivers deep Exploratory Data Analysis, automated machine learning pipeline strategies, interactive Plotly dashboards, and production-ready downloadable training scripts with a single prompt.
     </p>
 </div>
-""", unsafe_html=True)
+""", unsafe_allow_html=True)
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -105,7 +105,7 @@ dataset_error = None
 
 with st.sidebar:
     st.header("Settings")
-    st.info("Model: `groq/llama-3.3-70b-versatile`")
+    st.info("Model: `gemini/gemini-2.5-flash`")
 
     if st.button("Clear History"):
         st.session_state.messages = []
