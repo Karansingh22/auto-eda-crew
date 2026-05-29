@@ -65,6 +65,14 @@ vis_agent = Agent(
     llm=llm,
 )
 
+# Assign agents to tasks to satisfy CrewAI's validation requirements
+route_task.agent = router
+orchestrate_task.agent = orchestrator
+eda_task.agent = eda_agent
+ml_task.agent = ml_agent
+vis_task.agent = vis_agent
+pipeline_task.agent = ml_agent
+
 # ── Crews ───────────────────────────────────────────────
 
 route_crew = Crew(

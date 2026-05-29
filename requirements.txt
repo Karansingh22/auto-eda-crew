@@ -3,3 +3,5 @@ crewai-tools>=0.33.0
 python-dotenv>=1.0.1
 streamlit>=1.40.0
 crewai
+plotly>=5.18.0
+scikit-learn>=1.3.0
